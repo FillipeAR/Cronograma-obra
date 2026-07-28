@@ -109,7 +109,7 @@ export default function RelatorioVistoriaPage() {
         {/* Header */}
         <div className="px-8 py-6 border-b-2 border-[#0B1929] flex items-center justify-between">
           <div>
-            <p className="text-lg font-bold text-[#0B1929]">SEPENG Engenharia</p>
+            <p className="text-lg font-bold text-[#0B1929]">Amihan Incorporação SPE LTDA</p>
             <p className="text-xs text-gray-500">Relatório de Vistoria — Amihan Jaguaribe</p>
           </div>
           <div className="text-right">
@@ -238,7 +238,7 @@ export default function RelatorioVistoriaPage() {
 
         {/* Footer */}
         <div className="px-8 py-4 text-center text-[10px] text-gray-400">
-          Relatório gerado em {fmtDT(new Date().toISOString())} · SEPENG Engenharia
+          Relatório gerado em {fmtDT(new Date().toISOString())} · Amihan Incorporação SPE LTDA
         </div>
       </div>
 

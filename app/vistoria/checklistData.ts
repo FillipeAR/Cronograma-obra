@@ -33,8 +33,8 @@ export const CHECKLIST: ChecklistCategory[] = [
     key: "loucas",
     label: "Louças, ferragens e bancadas",
     items: [
-      { key: "l1", label: "Bancada instalada na cozinha, inclusive rodapé" },
-      { key: "l2", label: "Bancada instalada no banheiro, inclusive rodapé" },
+      { key: "l1", label: "Bancada instalada na cozinha, inclusive rodopia" },
+      { key: "l2", label: "Bancada instalada no banheiro, inclusive rodopia" },
       { key: "l3", label: "Rejunte/vedação em bancadas (banheiro e cozinha)" },
       { key: "l4", label: "Cuba de louça — instalação e vedação (banheiro)" },
       { key: "l5", label: "Cuba de inox — instalação e vedação (cozinha)" },
