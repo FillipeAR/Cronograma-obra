@@ -4,8 +4,8 @@ import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Text } from "@react-three/drei";
 import { useState, useCallback } from "react";
 import * as THREE from "three";
-import type { Unit, UnitStatus } from "./unitTypes";
-import { STATUS_COLOR, isSpecialLevel, isCommonArea } from "./unitTypes";
+import type { Unit } from "./unitTypes";
+import { isSpecialLevel, isCommonArea, unitBlockColor } from "./unitTypes";
 
 // Box dimensions
 const W = 1.0;
@@ -30,7 +30,7 @@ const CY = ((MIN_FLOOR - 1) * STEP_Y + (MAX_FLOOR - 1) * STEP_Y) / 2;
 const SPECIAL_W = RIGHT + W + 0.2;
 
 function statusColor(u: Unit) {
-  return new THREE.Color(STATUS_COLOR[u.status as UnitStatus] ?? STATUS_COLOR.disponivel);
+  return new THREE.Color(unitBlockColor(u));
 }
 
 function BoxUnit({

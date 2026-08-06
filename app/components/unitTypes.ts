@@ -128,6 +128,19 @@ export const ALL_STATUSES: UnitStatus[] = [
   "indisponivel",
 ];
 
+/** Cor do bloco (3D e card) quando as chaves já foram entregues — sobrepõe a cor de status. */
+export const KEYS_DELIVERED_COLOR = "#F5F5F0";
+
+export function keysDelivered(entregaChaves: string | null): boolean {
+  if (!entregaChaves) return false;
+  try { return !!(JSON.parse(entregaChaves) as EntregaChaves).documentoAssinado; } catch { return false; }
+}
+
+/** Cor do bloco da unidade: branco se chaves entregues, senão a cor do status. */
+export function unitBlockColor(u: { status: UnitStatus; entregaChaves: string | null }): string {
+  return keysDelivered(u.entregaChaves) ? KEYS_DELIVERED_COLOR : STATUS_COLOR[u.status];
+}
+
 /* ── Estrutura do prédio ────────────────────────────────────────────
    Pavimentos de apartamento: 1 a 16 (posições 1-6 = apartamentos,
    posição 7 = área comum do pavimento — hall, escada, área técnica).

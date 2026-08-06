@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import type { Unit, UnitStatus, UnitPatch, PendenciaItem } from "./unitTypes";
-import { STATUS_COLOR, STATUS_LABEL, STATUS_EMOJI, ALL_STATUSES, floorName, isSpecialLevel, isCommonArea } from "./unitTypes";
+import { STATUS_COLOR, STATUS_LABEL, STATUS_EMOJI, ALL_STATUSES, floorName, isSpecialLevel, isCommonArea, unitBlockColor, keysDelivered, KEYS_DELIVERED_COLOR } from "./unitTypes";
 import ApartmentModal from "./ApartmentModal";
 
 const Building3D = dynamic(() => import("./Building3D"), {
@@ -237,7 +237,7 @@ function UnitCard({
   onOpenVistoria?: (vistoriaId: string) => void;
 }) {
   const [creating, setCreating] = useState(false);
-  const color = STATUS_COLOR[unit.status];
+  const color = unitBlockColor(unit);
   const special = isSpecialLevel(unit.floor);
   const common = isCommonArea(unit);
   const vistoriaTipo: "habitese" | "area_comum" = special || common ? "area_comum" : "habitese";
@@ -319,14 +319,15 @@ function GridView({
   vistoriaByUnit?: Record<string, string>;
   onOpenVistoria?: (vistoriaId: string) => void;
 }) {
-  const [filterStatus, setFilterStatus] = useState<UnitStatus | "all">("all");
+  const [filterStatus, setFilterStatus] = useState<UnitStatus | "all" | "chaves">("all");
   const [search, setSearch] = useState("");
 
   // conta só apartamentos (posições 1-6) para os filtros
   const aptsOnly = units.filter((u) => !isSpecialLevel(u.floor) && !isCommonArea(u));
+  const chavesCount = aptsOnly.filter((u) => keysDelivered(u.entregaChaves)).length;
 
   const filtered = units
-    .filter((u) => filterStatus === "all" || u.status === filterStatus)
+    .filter((u) => filterStatus === "all" || (filterStatus === "chaves" ? keysDelivered(u.entregaChaves) : u.status === filterStatus))
     .filter((u) => !search || u.number.toLowerCase().includes(search.toLowerCase()) || (u.responsavel ?? "").toLowerCase().includes(search.toLowerCase()));
 
   const floors = Array.from(new Set(filtered.map((u) => u.floor))).sort((a, b) => b - a);
@@ -365,6 +366,17 @@ function GridView({
             </button>
           );
         })}
+        {chavesCount > 0 && (
+          <button
+            onClick={() => setFilterStatus(filterStatus === "chaves" ? "all" : "chaves")}
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-all
+              ${filterStatus === "chaves" ? "text-white border-white/20" : "border-white/10 text-gray-500 hover:text-gray-300"}`}
+            style={filterStatus === "chaves" ? { backgroundColor: KEYS_DELIVERED_COLOR + "33", borderColor: KEYS_DELIVERED_COLOR + "66" } : {}}
+          >
+            <div className="w-1.5 h-1.5 rounded-full border border-white/30" style={{ backgroundColor: KEYS_DELIVERED_COLOR }} />
+            🔑 Chaves entregues ({chavesCount})
+          </button>
+        )}
       </div>
 
       {/* Andares */}
@@ -590,12 +602,13 @@ export default function BuildingView({
     (acc, s) => ({ ...acc, [s]: units.filter((u) => u.status === s).length }),
     {} as Record<UnitStatus, number>
   );
+  const chavesEntreguesCount = units.filter((u) => keysDelivered(u.entregaChaves)).length;
 
   return (
     <div className="flex flex-col gap-4">
       {/* Stats bar + view toggle */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 flex-1">
+        <div className="grid grid-cols-3 sm:grid-cols-7 gap-2 flex-1">
           {ALL_STATUSES.map((s) => (
             <div
               key={s}
@@ -611,6 +624,16 @@ export default function BuildingView({
               </div>
             </div>
           ))}
+          <div className="flex items-center gap-2 bg-[#0F1E2E] border border-white/5 rounded-xl px-3 py-2">
+            <div
+              className="w-2.5 h-2.5 rounded-sm flex-shrink-0 border border-white/30"
+              style={{ backgroundColor: KEYS_DELIVERED_COLOR }}
+            />
+            <div className="min-w-0">
+              <p className="text-[10px] text-gray-500 leading-tight truncate">🔑 Chaves entregues</p>
+              <p className="text-sm font-bold text-white leading-tight">{chavesEntreguesCount}</p>
+            </div>
+          </div>
         </div>
 
         {/* Toggle */}
@@ -849,6 +872,10 @@ export default function BuildingView({
             <span className="text-xs text-gray-400">{STATUS_LABEL[s]}</span>
           </div>
         ))}
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-sm border border-white/30" style={{ backgroundColor: KEYS_DELIVERED_COLOR }} />
+          <span className="text-xs text-gray-400">🔑 Chaves entregues</span>
+        </div>
         <p className="text-xs text-gray-600 ml-auto">Torre Única · 16 andares · 96 unidades</p>
       </div>
     </div>
