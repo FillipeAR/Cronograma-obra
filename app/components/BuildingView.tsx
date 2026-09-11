@@ -374,7 +374,7 @@ function GridView({
             style={filterStatus === "chaves" ? { backgroundColor: KEYS_DELIVERED_COLOR + "33", borderColor: KEYS_DELIVERED_COLOR + "66" } : {}}
           >
             <div className="w-1.5 h-1.5 rounded-full border border-white/30" style={{ backgroundColor: KEYS_DELIVERED_COLOR }} />
-            🔑 Chaves entregues ({chavesCount})
+            🔑 Entrega de chave ({chavesCount})
           </button>
         )}
       </div>
@@ -630,7 +630,7 @@ export default function BuildingView({
               style={{ backgroundColor: KEYS_DELIVERED_COLOR }}
             />
             <div className="min-w-0">
-              <p className="text-[10px] text-gray-500 leading-tight truncate">🔑 Chaves entregues</p>
+              <p className="text-[10px] text-gray-500 leading-tight truncate">🔑 Entrega de chave</p>
               <p className="text-sm font-bold text-white leading-tight">{chavesEntreguesCount}</p>
             </div>
           </div>
@@ -874,7 +874,7 @@ export default function BuildingView({
         ))}
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-sm border border-white/30" style={{ backgroundColor: KEYS_DELIVERED_COLOR }} />
-          <span className="text-xs text-gray-400">🔑 Chaves entregues</span>
+          <span className="text-xs text-gray-400">🔑 Entrega de chave</span>
         </div>
         <p className="text-xs text-gray-600 ml-auto">Torre Única · 16 andares · 96 unidades</p>
       </div>
