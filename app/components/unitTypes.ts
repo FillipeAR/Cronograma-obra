@@ -1,7 +1,7 @@
 export type UnitStatus =
-  | "disponivel"    // verde   — vistoria com cliente concluída / aguardando quitação
+  | "disponivel"    // verde   — vistoria do cliente concluída / aguardando quitação
   | "agendada"      // marrom  — vistoria marcada
-  | "revistoria"    // ciano   — 2ª vistoria agendada
+  | "revistoria"    // ciano   — pré-vistoria
   | "concluida"     // roxo    — escritura
   | "pendencia"     // amarelo — tem pendências
   | "indisponivel"; // vermelho — sem acesso
@@ -102,9 +102,9 @@ export const STATUS_COLOR: Record<UnitStatus, string> = {
 };
 
 export const STATUS_LABEL: Record<UnitStatus, string> = {
-  disponivel:   "Vistoria concluída / Aguardando quitação",
+  disponivel:   "Vistoria do cliente concluída / Aguardando quitação",
   agendada:     "Agendada",
-  revistoria:   "Revistoria",
+  revistoria:   "Pré-vistoria",
   concluida:    "Escritura",
   pendencia:    "Pendência",
   indisponivel: "Indisponível",
