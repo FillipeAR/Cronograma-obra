@@ -768,6 +768,27 @@ export default function BuildingView({
                         )}
                       </button>
                     ))}
+                    <div className="mt-1 pt-1.5 border-t border-white/10">
+                      <button
+                        onClick={() => setFichaUnitId(syncedSelected.id)}
+                        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold border transition-all text-left
+                          ${
+                            keysDelivered(syncedSelected.entregaChaves)
+                              ? "border-white/20 bg-white/10 text-white"
+                              : "border-white/5 text-gray-400 hover:border-white/15 hover:bg-white/5 hover:text-white"
+                          }`}
+                        title="Definido na aba Entrega de chaves"
+                      >
+                        <div
+                          className="w-2.5 h-2.5 rounded-full flex-shrink-0 border border-white/30"
+                          style={{ backgroundColor: KEYS_DELIVERED_COLOR }}
+                        />
+                        <span className="flex-1">🔑 Entrega de chave</span>
+                        {keysDelivered(syncedSelected.entregaChaves) && (
+                          <span className="text-[#2AB9B0]">✓</span>
+                        )}
+                      </button>
+                    </div>
                   </div>
 
                   {/* Notes toggle */}
