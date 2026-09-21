@@ -838,9 +838,15 @@ function PortalAccessBox({ unit, sessionId }: { unit: Unit; sessionId: string })
   const headers = { "x-user-id": sessionId, "Content-Type": "application/json" };
   const base = `/api/units/${unit.id}/access`;
 
+  // O nome do proprietário já cadastrado na ficha vem preenchido, até ele ganhar acesso
+  const nomeDaFicha = unit.responsavel?.trim() ?? "";
   const carregar = async () => {
     const r = await fetch(base, { headers });
-    if (r.ok) setAcessos(await r.json());
+    if (!r.ok) return;
+    const lista: AcessoDono[] = await r.json();
+    setAcessos(lista);
+    const jaTemAcesso = lista.some((a) => a.nome.trim().toLowerCase() === nomeDaFicha.toLowerCase());
+    setNome((atual) => atual || (jaTemAcesso ? "" : nomeDaFicha));
   };
   useEffect(() => {
     setAcessos(null); setSenhas({}); setNome(""); setErro("");
@@ -917,6 +923,9 @@ function PortalAccessBox({ unit, sessionId }: { unit: Unit; sessionId: string })
         <button onClick={adicionar} disabled={busy || !nome.trim()}
           className="text-xs font-bold px-3 py-2 rounded-xl bg-[#2AB9B0] text-white disabled:opacity-40 whitespace-nowrap">+ Adicionar dono</button>
       </div>
+      {nome && nome === nomeDaFicha && (
+        <p className="text-[10px] text-gray-500">Nome vindo da ficha do proprietário. Pode editar antes de adicionar.</p>
+      )}
       {erro && <p className="text-xs text-red-400">{erro}</p>}
     </div>
   );
