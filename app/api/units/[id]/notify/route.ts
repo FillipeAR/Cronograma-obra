@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Resend } from "resend";
 import { prisma } from "@/lib/prisma";
 import { parsePosObra } from "@/lib/posObra";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { enviarEmail } from "@/lib/mailer";
 
 const PORTAL_URL = process.env.PORTAL_URL ?? "https://portal-pos-obra.vercel.app";
 
@@ -121,8 +119,7 @@ export async function POST(
 </body>
 </html>`;
 
-  const { error } = await resend.emails.send({
-    from: "SEPENG <onboarding@resend.dev>",
+  const { error } = await enviarEmail({
     to: unit.email,
     subject: `Atualização no seu pedido — Apto ${unit.number}`,
     html,
@@ -130,7 +127,7 @@ export async function POST(
 
   if (error) {
     console.error("[notify]", error);
-    return NextResponse.json({ error: "Falha ao enviar e-mail", detail: error.message }, { status: 500 });
+    return NextResponse.json({ error: "Falha ao enviar e-mail", detail: error }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true });
