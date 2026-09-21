@@ -316,7 +316,7 @@ export default function ApartmentModal({
           )}
 
           {tab === "posobra" && (
-            <PosObraTab unit={unit} isAdmin={isAdmin} patch={patch} />
+            <PosObraTab unit={unit} isAdmin={isAdmin} sessionId={sessionId} patch={patch} />
           )}
         </div>
       </div>
@@ -825,13 +825,118 @@ const POSOBRA_STATUS: Record<PosObraItem["status"], { label: string; color: stri
   aceito:       { label: "Aceito",       color: "#22C55E" },
 };
 
-function PosObraTab({ unit, isAdmin, patch }: { unit: Unit; isAdmin: boolean; patch: (p: UnitPatch) => Promise<void>; }) {
+/* Acessos dos proprietários ao portal de pós-obra (login = nº do apto + senha gerada aqui).
+   Uma unidade pode ter mais de um dono; cada um tem a própria senha. */
+type AcessoDono = { id: string; nome: string; lastLoginAt: string | null };
+
+function PortalAccessBox({ unit, sessionId }: { unit: Unit; sessionId: string }) {
+  const [acessos, setAcessos] = useState<AcessoDono[] | null>(null);
+  const [nome, setNome] = useState("");
+  const [senhas, setSenhas] = useState<Record<string, string>>({}); // id -> senha recém-gerada (só nesta tela)
+  const [busy, setBusy] = useState(false);
+  const [erro, setErro] = useState("");
+  const headers = { "x-user-id": sessionId, "Content-Type": "application/json" };
+  const base = `/api/units/${unit.id}/access`;
+
+  const carregar = async () => {
+    const r = await fetch(base, { headers });
+    if (r.ok) setAcessos(await r.json());
+  };
+  useEffect(() => {
+    setAcessos(null); setSenhas({}); setNome(""); setErro("");
+    carregar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unit.id]);
+
+  const adicionar = async () => {
+    if (!nome.trim()) return;
+    setBusy(true); setErro("");
+    const r = await fetch(base, { method: "POST", headers, body: JSON.stringify({ nome }) });
+    const d = await r.json().catch(() => null);
+    if (r.ok) { setSenhas((s) => ({ ...s, [d.id]: d.senha })); setNome(""); await carregar(); }
+    else setErro(d?.error ?? "Não foi possível criar o acesso");
+    setBusy(false);
+  };
+  const novaSenha = async (a: AcessoDono) => {
+    if (!confirm(`Gerar nova senha para ${a.nome}? A senha atual deixa de funcionar.`)) return;
+    setBusy(true); setErro("");
+    const r = await fetch(`${base}/${a.id}`, { method: "POST", headers });
+    if (r.ok) { const d = await r.json(); setSenhas((s) => ({ ...s, [a.id]: d.senha })); }
+    else setErro("Não foi possível gerar a senha");
+    setBusy(false);
+  };
+  const revogar = async (a: AcessoDono) => {
+    if (!confirm(`Revogar o acesso de ${a.nome}?`)) return;
+    setBusy(true); setErro("");
+    const r = await fetch(`${base}/${a.id}`, { method: "DELETE", headers });
+    if (r.ok) { setSenhas((s) => { const { [a.id]: _, ...resto } = s; return resto; }); await carregar(); }
+    else setErro("Não foi possível revogar");
+    setBusy(false);
+  };
+
+  return (
+    <div className="bg-[#0F1E2E] border border-[#2AB9B0]/20 rounded-2xl p-4 flex flex-col gap-3">
+      <div>
+        <p className="text-sm font-bold text-white">🔑 Acesso ao portal de pós-obra</p>
+        <p className="text-xs text-gray-500 mt-0.5">
+          Login: apartamento <b className="text-gray-300">{unit.number}</b> + a senha de cada proprietário.
+          Se o apartamento tem mais de um dono, cadastre cada um separadamente.
+        </p>
+      </div>
+
+      {acessos === null && <p className="text-xs text-gray-500">Verificando…</p>}
+      {acessos?.length === 0 && <p className="text-xs text-gray-600 italic">Nenhum proprietário com acesso</p>}
+
+      {acessos?.map((a) => (
+        <div key={a.id} className="bg-black/20 border border-white/5 rounded-xl px-3 py-2.5 flex flex-col gap-1.5">
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-white truncate">{a.nome}</p>
+              <p className="text-[10px] text-gray-500">
+                {a.lastLoginAt ? `último acesso ${new Date(a.lastLoginAt).toLocaleString("pt-BR")}` : "nunca acessou"}
+              </p>
+            </div>
+            <button onClick={() => novaSenha(a)} disabled={busy}
+              className="text-[11px] font-bold px-2.5 py-1.5 rounded-lg border border-white/15 text-gray-300 hover:text-white disabled:opacity-40">Nova senha</button>
+            <button onClick={() => revogar(a)} disabled={busy}
+              className="text-[11px] font-bold px-2.5 py-1.5 rounded-lg border border-red-400/40 text-red-400 disabled:opacity-40">Revogar</button>
+          </div>
+          {senhas[a.id] && (
+            <div className="text-sm text-gray-300">
+              Senha: <code className="text-[#2AB9B0] font-bold tracking-wider">{senhas[a.id]}</code>
+              <span className="text-[10px] text-gray-500 ml-2">anote agora: não dá para ver de novo</span>
+            </div>
+          )}
+        </div>
+      ))}
+
+      <div className="flex gap-2">
+        <input value={nome} onChange={(e) => setNome(e.target.value)} onKeyDown={(e) => e.key === "Enter" && adicionar()}
+          maxLength={80} placeholder="Nome do proprietário…"
+          className="flex-1 min-w-0 bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-[#2AB9B0]" />
+        <button onClick={adicionar} disabled={busy || !nome.trim()}
+          className="text-xs font-bold px-3 py-2 rounded-xl bg-[#2AB9B0] text-white disabled:opacity-40 whitespace-nowrap">+ Adicionar dono</button>
+      </div>
+      {erro && <p className="text-xs text-red-400">{erro}</p>}
+    </div>
+  );
+}
+
+function PosObraTab({ unit, isAdmin, sessionId, patch }: { unit: Unit; isAdmin: boolean; sessionId: string; patch: (p: UnitPatch) => Promise<void>; }) {
   const items = parseList<PosObraItem>(unit.posObra);
   const [titulo, setTitulo] = useState("");
   const [descricao, setDescricao] = useState("");
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
 
-  const save = (next: PosObraItem[]) => patch({ posObra: JSON.stringify(next) });
+  // Lista mais recente, para que dois salvamentos seguidos (ex.: blur da resposta + clique no status)
+  // não sobrescrevam um ao outro com um `items` desatualizado.
+  const latest = useRef(items);
+  useEffect(() => { latest.current = items; });
+
+  const save = (next: PosObraItem[]) => {
+    latest.current = next;
+    return patch({ posObra: JSON.stringify(next) });
+  };
 
   const sendEmail = async (requestId: string) => {
     if (!unit.email) return;
@@ -845,7 +950,7 @@ function PosObraTab({ unit, isAdmin, patch }: { unit: Unit; isAdmin: boolean; pa
 
   const add = () => {
     if (!titulo.trim()) return;
-    save([...items, {
+    save([...latest.current, {
       id: uid(), titulo: titulo.trim(), descricao: descricao.trim(),
       status: "aberto", resposta: "", aceito: false, createdAt: new Date().toISOString(),
       origem: "admin",
@@ -854,14 +959,16 @@ function PosObraTab({ unit, isAdmin, patch }: { unit: Unit; isAdmin: boolean; pa
   };
 
   const patchItem = (id: string, p: Partial<PosObraItem>) =>
-    save(items.map((it) => it.id === id ? { ...it, ...p } : it));
-  const remove = (id: string) => save(items.filter((it) => it.id !== id));
+    save(latest.current.map((it) => it.id === id ? { ...it, ...p } : it));
+  const remove = (id: string) => save(latest.current.filter((it) => it.id !== id));
 
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-gray-400">
         Pedidos de revisão / manutenção pós-obra e as respostas da empresa.
       </p>
+
+      {isAdmin && <PortalAccessBox unit={unit} sessionId={sessionId} />}
 
       {/* Novo pedido */}
       {isAdmin && (
@@ -886,7 +993,7 @@ function PosObraTab({ unit, isAdmin, patch }: { unit: Unit; isAdmin: boolean; pa
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="text-sm font-bold text-white">{it.titulo}</p>
                   {it.origem === "portal" && (
-                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#2AB9B0]/15 text-[#2AB9B0] border border-[#2AB9B0]/30">👤 do proprietário</span>
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#2AB9B0]/15 text-[#2AB9B0] border border-[#2AB9B0]/30">👤 {it.criadoPor ? `de ${it.criadoPor}` : "do proprietário"}</span>
                   )}
                 </div>
                 {it.descricao && <p className="text-xs text-gray-400 mt-0.5">{it.descricao}</p>}
@@ -944,6 +1051,7 @@ function PosObraTab({ unit, isAdmin, patch }: { unit: Unit; isAdmin: boolean; pa
             {it.assinaturaImg && (
               <div className="flex items-center gap-3 bg-[#22C55E]/[0.07] border border-[#22C55E]/20 rounded-xl px-3 py-2">
                 <span className="text-[#22C55E] text-xs font-bold flex-shrink-0">✔ Aceito</span>
+                {it.assinaturaPor && <span className="text-[10px] text-gray-400">{it.assinaturaPor}</span>}
                 {it.assinaturaData && <span className="text-[10px] text-gray-500">{new Date(it.assinaturaData).toLocaleString("pt-BR")}</span>}
                 <img src={it.assinaturaImg} alt="assinatura" className="h-8 ml-auto rounded bg-black/30 border border-white/10" />
               </div>

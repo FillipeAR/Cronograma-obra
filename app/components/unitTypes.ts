@@ -23,8 +23,10 @@ export type PosObraItem = {
   aceito: boolean;
   createdAt: string;
   origem?: "admin" | "portal";   // quem abriu o pedido
+  criadoPor?: string;            // dono que abriu o pedido pelo portal
   assinaturaImg?: string;        // assinatura da aceitação (dataURL)
   assinaturaData?: string;       // quando foi aceito/assinado
+  assinaturaPor?: string;        // dono que assinou o aceite pelo portal
 };
 
 export type EntregaChaves = {

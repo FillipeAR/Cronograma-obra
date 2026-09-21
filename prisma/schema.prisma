@@ -66,6 +66,8 @@ model Unit {
   // Portal do proprietário (token do link único)
   portalToken String? @unique
 
+  clientAccess ClientAccess[]
+
   visits        Visit[]
   contratoFiles ContratoFile[]
   vistorias     Vistoria[]
@@ -102,6 +104,23 @@ model ContratoFile {
   size      Int
   data      Bytes
   createdAt DateTime @default(now())
+
+  @@index([unitId])
+}
+
+// Acesso de um proprietário ao portal de pós-obra (app separado, mesmo banco).
+// Uma unidade pode ter vários donos, cada um com o próprio acesso e senha.
+// A senha é gerada pelo admin e só o hash fica guardado.
+model ClientAccess {
+  id             String    @id @default(cuid())
+  unitId         String
+  unit           Unit      @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  nome           String
+  passwordHash   String
+  failedAttempts Int       @default(0)
+  lockedUntil    DateTime?
+  lastLoginAt    DateTime?
+  createdAt      DateTime  @default(now())
 
   @@index([unitId])
 }
