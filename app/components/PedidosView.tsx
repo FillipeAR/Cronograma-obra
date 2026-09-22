@@ -86,7 +86,7 @@ export default function PedidosView({
                       <span className="text-sm font-bold text-[#2AB9B0]">{p.unit.number}</span>
                       <span className="text-xs text-gray-500">{p.unit.floor}º andar</span>
                       {p.origem === "portal" && (
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#2AB9B0]/15 text-[#2AB9B0] border border-[#2AB9B0]/30">👤 do proprietário</span>
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#2AB9B0]/15 text-[#2AB9B0] border border-[#2AB9B0]/30">👤 {p.criadoPor ? `de ${p.criadoPor}` : "do proprietário"}</span>
                       )}
                     </div>
                     <p className="text-sm font-semibold text-white mt-1">{p.titulo}</p>

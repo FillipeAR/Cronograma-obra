@@ -959,14 +959,20 @@ function PosObraTab({ unit, isAdmin, sessionId, patch }: { unit: Unit; isAdmin: 
     return r.ok;
   };
 
-  // Salva a resposta e só então avisa o cliente por e-mail (nessa ordem, para o e-mail nunca sair com o texto antigo)
-  const enviarResposta = async (id: string) => {
+  // Salva a resposta e só então avisa o cliente por e-mail (nessa ordem, para o e-mail nunca sair com o texto antigo).
+  // Serviço válido -> "respondido" (o cliente confirma depois, no portal). Serviço inválido -> "concluido" direto,
+  // sem passar pelo cliente (não há o que confirmar).
+  const enviarResposta = async (id: string, valido: boolean) => {
     const it = latest.current.find((i) => i.id === id);
     const texto = drafts[id] ?? it?.resposta ?? "";
     if (!texto.trim() || !it) return;
     setEnviando(id);
-    // Enviar a resposta é o único jeito de o pedido virar "respondido"
-    await save(latest.current.map((i) => i.id === id ? { ...i, resposta: texto, status: "respondido" } : i));
+    const patchIt: PosObraItem = {
+      ...it, resposta: texto, servicoValido: valido,
+      status: valido ? "respondido" : "concluido",
+      ...(valido ? {} : { concluidoEm: new Date().toISOString() }),
+    };
+    await save(latest.current.map((i) => i.id === id ? patchIt : i));
     const emailOk = await sendEmail(id);
     setEnviados((e) => ({ ...e, [id]: emailOk ? "email" : "salvo" }));
     setEnviando(null);
@@ -1042,12 +1048,20 @@ function PosObraTab({ unit, isAdmin, sessionId, patch }: { unit: Unit; isAdmin: 
                     onChange={(e) => setDrafts((d) => ({ ...d, [it.id]: e.target.value }))}
                     rows={2} placeholder="Escreva a resposta / providência…"
                     className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-[#2AB9B0] resize-none" />
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <button
-                      onClick={() => enviarResposta(it.id)}
+                      onClick={() => enviarResposta(it.id, true)}
                       disabled={enviando === it.id || !(drafts[it.id] ?? it.resposta).trim()}
-                      className="self-start px-4 py-2 rounded-xl bg-[#2AB9B0] hover:bg-[#1EA59D] text-white text-xs font-bold disabled:opacity-40">
-                      {enviando === it.id ? "Enviando…" : "Enviar resposta"}
+                      title="O pedido vira 'Respondido' e o cliente confirma quando o serviço for realizado"
+                      className="self-start px-4 py-2 rounded-xl bg-[#06B6D4] hover:bg-[#0891A8] text-white text-xs font-bold disabled:opacity-40">
+                      {enviando === it.id ? "Enviando…" : "✅ Enviar — serviço válido"}
+                    </button>
+                    <button
+                      onClick={() => enviarResposta(it.id, false)}
+                      disabled={enviando === it.id || !(drafts[it.id] ?? it.resposta).trim()}
+                      title="O pedido é encerrado direto, sem passar pelo cliente"
+                      className="self-start px-4 py-2 rounded-xl border border-red-400/40 text-red-400 hover:bg-red-400/10 text-xs font-bold disabled:opacity-40">
+                      {enviando === it.id ? "Enviando…" : "🚫 Enviar — serviço inválido"}
                     </button>
                     {enviados[it.id] === "email" && <span className="text-[10px] text-[#22C55E]">✓ Enviada por e-mail ao proprietário</span>}
                     {enviados[it.id] === "salvo" && <span className="text-[10px] text-gray-500">✓ Salva no portal (unidade sem e-mail cadastrado)</span>}
@@ -1073,13 +1087,20 @@ function PosObraTab({ unit, isAdmin, sessionId, patch }: { unit: Unit; isAdmin: 
               </div>
             )}
 
-            {/* Confirmação do cliente ("Serviço realizado"), feita no portal */}
+            {/* Encerramento: pelo cliente ("Serviço realizado", no portal) ou direto, quando a resposta marcou serviço inválido */}
             {it.status === "concluido" && (
-              <div className="flex items-center gap-3 bg-[#22C55E]/[0.07] border border-[#22C55E]/20 rounded-xl px-3 py-2">
-                <span className="text-[#22C55E] text-xs font-bold flex-shrink-0">✔ Serviço realizado</span>
-                {it.concluidoPor && <span className="text-[10px] text-gray-400">{it.concluidoPor}</span>}
-                {it.concluidoEm && <span className="text-[10px] text-gray-500">{new Date(it.concluidoEm).toLocaleString("pt-BR")}</span>}
-              </div>
+              it.concluidoPor ? (
+                <div className="flex items-center gap-3 bg-[#22C55E]/[0.07] border border-[#22C55E]/20 rounded-xl px-3 py-2">
+                  <span className="text-[#22C55E] text-xs font-bold flex-shrink-0">✔ Serviço realizado</span>
+                  <span className="text-[10px] text-gray-400">{it.concluidoPor}</span>
+                  {it.concluidoEm && <span className="text-[10px] text-gray-500">{new Date(it.concluidoEm).toLocaleString("pt-BR")}</span>}
+                </div>
+              ) : (
+                <div className="flex items-center gap-3 bg-white/[0.03] border border-white/10 rounded-xl px-3 py-2">
+                  <span className="text-gray-400 text-xs font-bold flex-shrink-0">🚫 Encerrado — serviço inválido</span>
+                  {it.concluidoEm && <span className="text-[10px] text-gray-500">{new Date(it.concluidoEm).toLocaleString("pt-BR")}</span>}
+                </div>
+              )
             )}
           </div>
         );

@@ -18,15 +18,17 @@ export type PosObraItem = {
   id: string;
   titulo: string;
   descricao: string;
-  // "respondido" só é atingido ao enviar a resposta (nunca à mão);
-  // "concluido" só o próprio cliente atinge, clicando "Serviço realizado" no portal.
+  // "respondido" só é atingido ao enviar a resposta com serviço válido (nunca à mão);
+  // "concluido" é atingido pelo cliente (clicando "Serviço realizado") OU direto pela
+  // empresa, quando a resposta marca o serviço como inválido (ver servicoValido).
   status: "aberto" | "em_andamento" | "respondido" | "concluido";
   resposta: string;
   createdAt: string;
   origem?: "admin" | "portal";   // quem abriu o pedido
   criadoPor?: string;            // dono que abriu o pedido pelo portal
-  concluidoEm?: string;          // quando o cliente confirmou o serviço realizado
-  concluidoPor?: string;         // qual dono confirmou
+  servicoValido?: boolean;       // true = resposta com serviço válido; false = serviço inválido (fecha direto)
+  concluidoEm?: string;          // quando o pedido foi concluído (clique do cliente, ou resposta inválida)
+  concluidoPor?: string;         // dono que confirmou (vazio quando concluído por resposta inválida)
 };
 
 export type EntregaChaves = {

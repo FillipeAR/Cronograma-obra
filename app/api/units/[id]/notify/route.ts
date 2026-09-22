@@ -92,6 +92,8 @@ export async function POST(
               <p style="margin:0 0 14px;color:#475569;font-size:13px;line-height:1.6">
                 ${item.status === "respondido"
                   ? "A construtora respondeu ao seu pedido. Se o serviço já foi realizado, acesse o portal para confirmar:"
+                  : item.status === "concluido" && !item.concluidoPor
+                  ? "A construtora respondeu e encerrou o seu pedido. Acesse o portal para ver os detalhes:"
                   : "Acompanhe seus pedidos e as respostas da construtora no portal:"}
               </p>
               <a href="${PORTAL_URL}" style="display:inline-block;background:#2AB9B0;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:12px 28px;border-radius:10px">Acessar o portal</a>
