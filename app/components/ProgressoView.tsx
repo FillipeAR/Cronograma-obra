@@ -123,7 +123,8 @@ export default function ProgressoView({ units, vistorias }: { units: Unit[]; vis
   let posObraTotal = 0;
   for (const u of units) {
     for (const it of parsePosObra(u.posObra)) {
-      posObraCounts[it.status]++;
+      // Ignora status desconhecido (dado antigo/corrompido) em vez de virar NaN na contagem
+      if (it.status in posObraCounts) posObraCounts[it.status]++;
       posObraTotal++;
     }
   }

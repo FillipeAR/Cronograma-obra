@@ -73,7 +73,8 @@ export default function PedidosView({
       ) : (
         <div className="flex flex-col gap-2">
           {filtered.map((p) => {
-            const st = STATUS[p.status];
+            // Nunca deixa um status inesperado (dado antigo/corrompido) derrubar a página inteira
+            const st = STATUS[p.status] ?? { label: String(p.status), color: "#6B7280" };
             return (
               <button
                 key={p.id}

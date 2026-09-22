@@ -1015,7 +1015,8 @@ function PosObraTab({ unit, isAdmin, sessionId, patch }: { unit: Unit; isAdmin: 
       {items.length === 0 && <p className="text-sm text-gray-600 italic">Nenhum pedido registrado</p>}
 
       {items.slice().reverse().map((it) => {
-        const st = POSOBRA_STATUS[it.status];
+        // Nunca deixa um status inesperado (dado antigo/corrompido) derrubar a página inteira
+        const st = POSOBRA_STATUS[it.status] ?? { label: String(it.status), color: "#6B7280" };
         return (
           <div key={it.id} className="bg-[#0F1E2E] border border-white/5 rounded-2xl p-4 flex flex-col gap-3">
             <div className="flex items-start gap-3">
