@@ -18,15 +18,15 @@ export type PosObraItem = {
   id: string;
   titulo: string;
   descricao: string;
-  status: "aberto" | "em_andamento" | "atendido" | "aceito";
+  // "respondido" só é atingido ao enviar a resposta (nunca à mão);
+  // "concluido" só o próprio cliente atinge, clicando "Serviço realizado" no portal.
+  status: "aberto" | "em_andamento" | "respondido" | "concluido";
   resposta: string;
-  aceito: boolean;
   createdAt: string;
   origem?: "admin" | "portal";   // quem abriu o pedido
   criadoPor?: string;            // dono que abriu o pedido pelo portal
-  assinaturaImg?: string;        // assinatura da aceitação (dataURL)
-  assinaturaData?: string;       // quando foi aceito/assinado
-  assinaturaPor?: string;        // dono que assinou o aceite pelo portal
+  concluidoEm?: string;          // quando o cliente confirmou o serviço realizado
+  concluidoPor?: string;         // qual dono confirmou
 };
 
 export type EntregaChaves = {

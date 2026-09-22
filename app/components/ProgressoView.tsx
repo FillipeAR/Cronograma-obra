@@ -119,7 +119,7 @@ export default function ProgressoView({ units, vistorias }: { units: Unit[]; vis
   }
 
   // ── Pós-obra ──
-  const posObraCounts: Record<PosObraItem["status"], number> = { aberto: 0, em_andamento: 0, atendido: 0, aceito: 0 };
+  const posObraCounts: Record<PosObraItem["status"], number> = { aberto: 0, em_andamento: 0, respondido: 0, concluido: 0 };
   let posObraTotal = 0;
   for (const u of units) {
     for (const it of parsePosObra(u.posObra)) {
@@ -173,12 +173,12 @@ export default function ProgressoView({ units, vistorias }: { units: Unit[]; vis
         <Section title="🔧 Pós-obra">
           {posObraTotal > 0 ? (
             <>
-              <ProgressBar done={posObraCounts.aceito} total={posObraTotal} color="#22C55E" />
+              <ProgressBar done={posObraCounts.concluido} total={posObraTotal} color="#22C55E" />
               <div className="flex flex-col gap-2">
                 <Row label="Aberto" value={posObraCounts.aberto} color="#F97316" />
                 <Row label="Em andamento" value={posObraCounts.em_andamento} color="#EAB308" />
-                <Row label="Atendido" value={posObraCounts.atendido} color="#06B6D4" />
-                <Row label="Aceito" value={posObraCounts.aceito} color="#22C55E" />
+                <Row label="Respondido" value={posObraCounts.respondido} color="#06B6D4" />
+                <Row label="Concluído" value={posObraCounts.concluido} color="#22C55E" />
               </div>
             </>
           ) : (

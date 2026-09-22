@@ -12,8 +12,8 @@ function parsePosObra(raw: string | null): PosObraItem[] {
 const STATUS: Record<PosObraItem["status"], { label: string; color: string }> = {
   aberto:       { label: "Aberto",       color: "#F97316" },
   em_andamento: { label: "Em andamento", color: "#EAB308" },
-  atendido:     { label: "Atendido",     color: "#06B6D4" },
-  aceito:       { label: "Aceito",       color: "#22C55E" },
+  respondido:   { label: "Respondido",   color: "#06B6D4" },
+  concluido:    { label: "Concluído",    color: "#22C55E" },
 };
 
 type PedidoRow = PosObraItem & { unit: Unit };

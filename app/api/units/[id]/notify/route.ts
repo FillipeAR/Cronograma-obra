@@ -31,8 +31,8 @@ export async function POST(
   const statusLabel: Record<string, string> = {
     aberto: "Aberto",
     em_andamento: "Em andamento",
-    atendido: "Atendido",
-    aceito: "Aceito",
+    respondido: "Respondido",
+    concluido: "Concluído",
   };
 
   const html = `
@@ -90,8 +90,8 @@ export async function POST(
           <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px">
             <tr><td align="center">
               <p style="margin:0 0 14px;color:#475569;font-size:13px;line-height:1.6">
-                ${item.status === "atendido"
-                  ? "O serviço foi concluído. Acesse o portal para confirmar o recebimento:"
+                ${item.status === "respondido"
+                  ? "A construtora respondeu ao seu pedido. Se o serviço já foi realizado, acesse o portal para confirmar:"
                   : "Acompanhe seus pedidos e as respostas da construtora no portal:"}
               </p>
               <a href="${PORTAL_URL}" style="display:inline-block;background:#2AB9B0;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:12px 28px;border-radius:10px">Acessar o portal</a>

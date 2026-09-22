@@ -821,8 +821,8 @@ function EntregaTab({ unit, isAdmin, patch }: { unit: Unit; isAdmin: boolean; pa
 const POSOBRA_STATUS: Record<PosObraItem["status"], { label: string; color: string }> = {
   aberto:       { label: "Aberto",       color: "#F97316" },
   em_andamento: { label: "Em andamento", color: "#EAB308" },
-  atendido:     { label: "Atendido",     color: "#06B6D4" },
-  aceito:       { label: "Aceito",       color: "#22C55E" },
+  respondido:   { label: "Respondido",   color: "#06B6D4" },
+  concluido:    { label: "Concluído",    color: "#22C55E" },
 };
 
 /* Acessos dos proprietários ao portal de pós-obra (login = nº do apto + senha gerada aqui).
@@ -965,8 +965,8 @@ function PosObraTab({ unit, isAdmin, sessionId, patch }: { unit: Unit; isAdmin: 
     const texto = drafts[id] ?? it?.resposta ?? "";
     if (!texto.trim() || !it) return;
     setEnviando(id);
-    const novoStatus = it.status === "aberto" ? "atendido" : it.status;
-    await save(latest.current.map((i) => i.id === id ? { ...i, resposta: texto, status: novoStatus } : i));
+    // Enviar a resposta é o único jeito de o pedido virar "respondido"
+    await save(latest.current.map((i) => i.id === id ? { ...i, resposta: texto, status: "respondido" } : i));
     const emailOk = await sendEmail(id);
     setEnviados((e) => ({ ...e, [id]: emailOk ? "email" : "salvo" }));
     setEnviando(null);
@@ -976,7 +976,7 @@ function PosObraTab({ unit, isAdmin, sessionId, patch }: { unit: Unit; isAdmin: 
     if (!titulo.trim()) return;
     save([...latest.current, {
       id: uid(), titulo: titulo.trim(), descricao: descricao.trim(),
-      status: "aberto", resposta: "", aceito: false, createdAt: new Date().toISOString(),
+      status: "aberto", resposta: "", createdAt: new Date().toISOString(),
       origem: "admin",
     }]);
     setTitulo(""); setDescricao("");
@@ -1058,11 +1058,12 @@ function PosObraTab({ unit, isAdmin, sessionId, patch }: { unit: Unit; isAdmin: 
               )}
             </div>
 
-            {/* Ações de status */}
+            {/* Ações de status — "Respondido" e "Concluído" não entram aqui: só se chega a eles
+                enviando a resposta (admin) ou clicando "Serviço realizado" (cliente, no portal) */}
             {isAdmin && (
               <div className="flex flex-wrap gap-2">
-                {(["aberto", "em_andamento", "atendido", "aceito"] as const).map((s) => (
-                  <button key={s} onClick={() => patchItem(it.id, { status: s, aceito: s === "aceito" })}
+                {(["aberto", "em_andamento"] as const).map((s) => (
+                  <button key={s} onClick={() => patchItem(it.id, { status: s })}
                     className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border transition-all
                       ${it.status === s ? "text-white" : "text-gray-500 border-white/10 hover:text-gray-300"}`}
                     style={it.status === s ? { backgroundColor: POSOBRA_STATUS[s].color + "33", borderColor: POSOBRA_STATUS[s].color + "66", color: POSOBRA_STATUS[s].color } : {}}>
@@ -1072,15 +1073,12 @@ function PosObraTab({ unit, isAdmin, sessionId, patch }: { unit: Unit; isAdmin: 
               </div>
             )}
 
-            {/* Aceite do termo de recebimento pelo proprietário (clique; pedidos antigos podem ter assinatura desenhada) */}
-            {it.status === "aceito" && (
+            {/* Confirmação do cliente ("Serviço realizado"), feita no portal */}
+            {it.status === "concluido" && (
               <div className="flex items-center gap-3 bg-[#22C55E]/[0.07] border border-[#22C55E]/20 rounded-xl px-3 py-2">
-                <span className="text-[#22C55E] text-xs font-bold flex-shrink-0">✔ Aceito</span>
-                {it.assinaturaPor && <span className="text-[10px] text-gray-400">{it.assinaturaPor}</span>}
-                {it.assinaturaData && <span className="text-[10px] text-gray-500">{new Date(it.assinaturaData).toLocaleString("pt-BR")}</span>}
-                {it.assinaturaImg && (
-                  <img src={it.assinaturaImg} alt="assinatura" className="h-8 ml-auto rounded bg-black/30 border border-white/10" />
-                )}
+                <span className="text-[#22C55E] text-xs font-bold flex-shrink-0">✔ Serviço realizado</span>
+                {it.concluidoPor && <span className="text-[10px] text-gray-400">{it.concluidoPor}</span>}
+                {it.concluidoEm && <span className="text-[10px] text-gray-500">{new Date(it.concluidoEm).toLocaleString("pt-BR")}</span>}
               </div>
             )}
           </div>
