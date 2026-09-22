@@ -1056,13 +1056,15 @@ function PosObraTab({ unit, isAdmin, sessionId, patch }: { unit: Unit; isAdmin: 
               </div>
             )}
 
-            {/* Assinatura da aceitação */}
-            {it.assinaturaImg && (
+            {/* Aceite do termo de recebimento pelo proprietário (clique; pedidos antigos podem ter assinatura desenhada) */}
+            {it.status === "aceito" && (
               <div className="flex items-center gap-3 bg-[#22C55E]/[0.07] border border-[#22C55E]/20 rounded-xl px-3 py-2">
                 <span className="text-[#22C55E] text-xs font-bold flex-shrink-0">✔ Aceito</span>
                 {it.assinaturaPor && <span className="text-[10px] text-gray-400">{it.assinaturaPor}</span>}
                 {it.assinaturaData && <span className="text-[10px] text-gray-500">{new Date(it.assinaturaData).toLocaleString("pt-BR")}</span>}
-                <img src={it.assinaturaImg} alt="assinatura" className="h-8 ml-auto rounded bg-black/30 border border-white/10" />
+                {it.assinaturaImg && (
+                  <img src={it.assinaturaImg} alt="assinatura" className="h-8 ml-auto rounded bg-black/30 border border-white/10" />
+                )}
               </div>
             )}
           </div>
