@@ -935,7 +935,9 @@ function PosObraTab({ unit, isAdmin, sessionId, patch }: { unit: Unit; isAdmin: 
   const items = parseList<PosObraItem>(unit.posObra);
   const [titulo, setTitulo] = useState("");
   const [descricao, setDescricao] = useState("");
-  const [sentIds, setSentIds] = useState<Set<string>>(new Set());
+  const [drafts, setDrafts] = useState<Record<string, string>>({}); // resposta sendo digitada, por pedido
+  const [enviando, setEnviando] = useState<string | null>(null); // id do pedido cuja resposta está sendo enviada agora
+  const [enviados, setEnviados] = useState<Record<string, "email" | "salvo">>({});
 
   // Lista mais recente, para que dois salvamentos seguidos (ex.: blur da resposta + clique no status)
   // não sobrescrevam um ao outro com um `items` desatualizado.
@@ -948,13 +950,26 @@ function PosObraTab({ unit, isAdmin, sessionId, patch }: { unit: Unit; isAdmin: 
   };
 
   const sendEmail = async (requestId: string) => {
-    if (!unit.email) return;
+    if (!unit.email) return false;
     const r = await fetch(`/api/units/${unit.id}/notify`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ requestId }),
     });
-    if (r.ok) setSentIds((s) => new Set([...s, requestId]));
+    return r.ok;
+  };
+
+  // Salva a resposta e só então avisa o cliente por e-mail (nessa ordem, para o e-mail nunca sair com o texto antigo)
+  const enviarResposta = async (id: string) => {
+    const it = latest.current.find((i) => i.id === id);
+    const texto = drafts[id] ?? it?.resposta ?? "";
+    if (!texto.trim() || !it) return;
+    setEnviando(id);
+    const novoStatus = it.status === "aberto" ? "atendido" : it.status;
+    await save(latest.current.map((i) => i.id === id ? { ...i, resposta: texto, status: novoStatus } : i));
+    const emailOk = await sendEmail(id);
+    setEnviados((e) => ({ ...e, [id]: emailOk ? "email" : "salvo" }));
+    setEnviando(null);
   };
 
   const add = () => {
@@ -1019,24 +1034,25 @@ function PosObraTab({ unit, isAdmin, sessionId, patch }: { unit: Unit; isAdmin: 
 
             {/* Resposta da empresa */}
             <div className="flex flex-col gap-1.5 pl-3 border-l-2 border-white/10">
-              <div className="flex items-center justify-between gap-2">
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Resposta da empresa</label>
-                {isAdmin && sentIds.has(it.id) && (
-                  <span className="text-[10px] text-[#22C55E]">✓ Email enviado</span>
-                )}
-              </div>
+              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Resposta da empresa</label>
               {isAdmin ? (
-                <textarea
-                  defaultValue={it.resposta}
-                  onBlur={async (e) => {
-                    const nova = e.target.value;
-                    if (nova === it.resposta) return;
-                    const novoStatus = nova.trim() && it.status === "aberto" ? "atendido" : it.status;
-                    patchItem(it.id, { resposta: nova, status: novoStatus });
-                    if (nova.trim()) await sendEmail(it.id);
-                  }}
-                  rows={2} placeholder="Escreva a resposta / providência…"
-                  className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-[#2AB9B0] resize-none" />
+                <>
+                  <textarea
+                    value={drafts[it.id] ?? it.resposta}
+                    onChange={(e) => setDrafts((d) => ({ ...d, [it.id]: e.target.value }))}
+                    rows={2} placeholder="Escreva a resposta / providência…"
+                    className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-[#2AB9B0] resize-none" />
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => enviarResposta(it.id)}
+                      disabled={enviando === it.id || !(drafts[it.id] ?? it.resposta).trim()}
+                      className="self-start px-4 py-2 rounded-xl bg-[#2AB9B0] hover:bg-[#1EA59D] text-white text-xs font-bold disabled:opacity-40">
+                      {enviando === it.id ? "Enviando…" : "Enviar resposta"}
+                    </button>
+                    {enviados[it.id] === "email" && <span className="text-[10px] text-[#22C55E]">✓ Enviada por e-mail ao proprietário</span>}
+                    {enviados[it.id] === "salvo" && <span className="text-[10px] text-gray-500">✓ Salva no portal (unidade sem e-mail cadastrado)</span>}
+                  </div>
+                </>
               ) : (
                 <p className="text-sm text-gray-300">{it.resposta || <span className="text-gray-600 italic">Aguardando resposta</span>}</p>
               )}
