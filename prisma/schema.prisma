@@ -110,7 +110,8 @@ model ContratoFile {
 
 // Acesso de um proprietário ao portal de pós-obra (app separado, mesmo banco).
 // Uma unidade pode ter vários donos, cada um com o próprio acesso e senha.
-// A senha é gerada pelo admin e só o hash fica guardado.
+// A senha é gerada pelo admin e só o hash fica guardado. No primeiro acesso o dono
+// é obrigado a trocar por uma senha pessoal (senhaTemporaria = false depois disso).
 model ClientAccess {
   id             String    @id @default(cuid())
   unitId         String
@@ -120,6 +121,7 @@ model ClientAccess {
   failedAttempts Int       @default(0)
   lockedUntil    DateTime?
   lastLoginAt    DateTime?
+  senhaTemporaria Boolean  @default(true)
   createdAt      DateTime  @default(now())
 
   @@index([unitId])

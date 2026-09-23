@@ -8,7 +8,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const { id } = await params;
   const acessos = await prisma.clientAccess.findMany({
     where: { unitId: id }, orderBy: { createdAt: "asc" },
-    select: { id: true, nome: true, lastLoginAt: true, createdAt: true },
+    select: { id: true, nome: true, lastLoginAt: true, senhaTemporaria: true, createdAt: true },
   });
   return NextResponse.json(acessos);
 }

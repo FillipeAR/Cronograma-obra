@@ -827,7 +827,7 @@ const POSOBRA_STATUS: Record<PosObraItem["status"], { label: string; color: stri
 
 /* Acessos dos proprietários ao portal de pós-obra (login = nº do apto + senha gerada aqui).
    Uma unidade pode ter mais de um dono; cada um tem a própria senha. */
-type AcessoDono = { id: string; nome: string; lastLoginAt: string | null };
+type AcessoDono = { id: string; nome: string; lastLoginAt: string | null; senhaTemporaria: boolean };
 
 function PortalAccessBox({ unit, sessionId }: { unit: Unit; sessionId: string }) {
   const [acessos, setAcessos] = useState<AcessoDono[] | null>(null);
@@ -864,7 +864,7 @@ function PortalAccessBox({ unit, sessionId }: { unit: Unit; sessionId: string })
     setBusy(false);
   };
   const novaSenha = async (a: AcessoDono) => {
-    if (!confirm(`Gerar nova senha para ${a.nome}? A senha atual deixa de funcionar.`)) return;
+    if (!confirm(`Gerar nova senha para ${a.nome}? A senha atual deixa de funcionar e ele terá que criar uma senha pessoal de novo.`)) return;
     setBusy(true); setErro("");
     const r = await fetch(`${base}/${a.id}`, { method: "POST", headers });
     if (r.ok) { const d = await r.json(); setSenhas((s) => ({ ...s, [a.id]: d.senha })); }
@@ -900,6 +900,7 @@ function PortalAccessBox({ unit, sessionId }: { unit: Unit; sessionId: string })
               <p className="text-sm font-semibold text-white truncate">{a.nome}</p>
               <p className="text-[10px] text-gray-500">
                 {a.lastLoginAt ? `último acesso ${new Date(a.lastLoginAt).toLocaleString("pt-BR")}` : "nunca acessou"}
+                {" · "}{a.senhaTemporaria ? "aguardando senha pessoal" : "senha pessoal definida"}
               </p>
             </div>
             <button onClick={() => novaSenha(a)} disabled={busy}
@@ -910,7 +911,7 @@ function PortalAccessBox({ unit, sessionId }: { unit: Unit; sessionId: string })
           {senhas[a.id] && (
             <div className="text-sm text-gray-300">
               Senha: <code className="text-[#2AB9B0] font-bold tracking-wider">{senhas[a.id]}</code>
-              <span className="text-[10px] text-gray-500 ml-2">anote agora: não dá para ver de novo</span>
+              <span className="text-[10px] text-gray-500 ml-2">anote agora: não dá para ver de novo. No 1º acesso o proprietário cria a senha dele.</span>
             </div>
           )}
         </div>
