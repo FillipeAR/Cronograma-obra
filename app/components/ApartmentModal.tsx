@@ -939,6 +939,21 @@ function PosObraTab({ unit, isAdmin, sessionId, patch }: { unit: Unit; isAdmin: 
   const [drafts, setDrafts] = useState<Record<string, string>>({}); // resposta sendo digitada, por pedido
   const [enviando, setEnviando] = useState<string | null>(null); // id do pedido cuja resposta está sendo enviada agora
   const [enviados, setEnviados] = useState<Record<string, "email" | "salvo">>({});
+  const [fotos, setFotos] = useState<Record<string, string[]>>({}); // pedidoId -> ids das fotos anexadas no portal
+
+  useEffect(() => {
+    let alive = true;
+    fetch(`/api/units/${unit.id}/fotos`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((lista: { id: string; pedidoId: string }[]) => {
+        if (!alive || !Array.isArray(lista)) return;
+        const porPedido: Record<string, string[]> = {};
+        for (const f of lista) (porPedido[f.pedidoId] ??= []).push(f.id);
+        setFotos(porPedido);
+      })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [unit.id]);
 
   // Lista mais recente, para que dois salvamentos seguidos (ex.: blur da resposta + clique no status)
   // não sobrescrevam um ao outro com um `items` desatualizado.
@@ -991,7 +1006,13 @@ function PosObraTab({ unit, isAdmin, sessionId, patch }: { unit: Unit; isAdmin: 
 
   const patchItem = (id: string, p: Partial<PosObraItem>) =>
     save(latest.current.map((it) => it.id === id ? { ...it, ...p } : it));
-  const remove = (id: string) => save(latest.current.filter((it) => it.id !== id));
+  const remove = async (id: string) => {
+    await save(latest.current.filter((it) => it.id !== id));
+    if (fotos[id]?.length) {
+      await fetch(`/api/units/${unit.id}/fotos?pedidoId=${encodeURIComponent(id)}`, { method: "DELETE", headers: { "x-user-id": sessionId } });
+      setFotos(({ [id]: _, ...resto }) => resto);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -1029,6 +1050,17 @@ function PosObraTab({ unit, isAdmin, sessionId, patch }: { unit: Unit; isAdmin: 
                   )}
                 </div>
                 {it.descricao && <p className="text-xs text-gray-400 mt-0.5">{it.descricao}</p>}
+                {fotos[it.id]?.length > 0 && (
+                  <div className="flex gap-2 mt-2">
+                    {fotos[it.id].map((fid, i) => (
+                      <a key={fid} href={`/api/pos-obra-fotos/${fid}`} target="_blank" rel="noreferrer">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={`/api/pos-obra-fotos/${fid}`} alt={`Foto ${i + 1} do pedido`} loading="lazy"
+                          className="w-16 h-16 object-cover rounded-lg border border-white/10 hover:border-[#2AB9B0]/60" />
+                      </a>
+                    ))}
+                  </div>
+                )}
                 <p className="text-[10px] text-gray-600 mt-1">{new Date(it.createdAt).toLocaleDateString("pt-BR")}</p>
               </div>
               <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full flex-shrink-0"

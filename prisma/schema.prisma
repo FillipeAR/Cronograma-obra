@@ -70,6 +70,7 @@ model Unit {
 
   visits        Visit[]
   contratoFiles ContratoFile[]
+  posObraFotos  PosObraFoto[]
   vistorias     Vistoria[]
   updatedAt     DateTime @updatedAt
 }
@@ -125,4 +126,19 @@ model ClientAccess {
   createdAt      DateTime  @default(now())
 
   @@index([unitId])
+}
+
+// Fotos que o proprietário anexa a um pedido de pós-obra pelo portal (no máximo 2 por pedido).
+// pedidoId é o id do item dentro do JSON Unit.posObra.
+model PosObraFoto {
+  id        String   @id @default(cuid())
+  unitId    String
+  unit      Unit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  pedidoId  String
+  mime      String
+  size      Int
+  data      Bytes
+  createdAt DateTime @default(now())
+
+  @@index([unitId, pedidoId])
 }
