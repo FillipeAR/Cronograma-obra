@@ -976,7 +976,7 @@ function PosObraTab({ unit, isAdmin, sessionId, patch }: { unit: Unit; isAdmin: 
   };
 
   // Salva a resposta e só então avisa o cliente por e-mail (nessa ordem, para o e-mail nunca sair com o texto antigo).
-  // Serviço válido -> "respondido" (o cliente confirma depois, no portal). Serviço inválido -> "concluido" direto,
+  // Serviço procedente -> "respondido" (o cliente confirma depois, no portal). Serviço improcedente -> "concluido" direto,
   // sem passar pelo cliente (não há o que confirmar).
   const enviarResposta = async (id: string, valido: boolean) => {
     const it = latest.current.find((i) => i.id === id);
@@ -1088,14 +1088,14 @@ function PosObraTab({ unit, isAdmin, sessionId, patch }: { unit: Unit; isAdmin: 
                       disabled={enviando === it.id || !(drafts[it.id] ?? it.resposta).trim()}
                       title="O pedido vira 'Respondido' e o cliente confirma quando o serviço for realizado"
                       className="self-start px-4 py-2 rounded-xl bg-[#06B6D4] hover:bg-[#0891A8] text-white text-xs font-bold disabled:opacity-40">
-                      {enviando === it.id ? "Enviando…" : "✅ Enviar — serviço válido"}
+                      {enviando === it.id ? "Enviando…" : "✅ Enviar — serviço procedente"}
                     </button>
                     <button
                       onClick={() => enviarResposta(it.id, false)}
                       disabled={enviando === it.id || !(drafts[it.id] ?? it.resposta).trim()}
                       title="O pedido é encerrado direto, sem passar pelo cliente"
                       className="self-start px-4 py-2 rounded-xl border border-red-400/40 text-red-400 hover:bg-red-400/10 text-xs font-bold disabled:opacity-40">
-                      {enviando === it.id ? "Enviando…" : "🚫 Enviar — serviço inválido"}
+                      {enviando === it.id ? "Enviando…" : "🚫 Enviar — serviço improcedente"}
                     </button>
                     {enviados[it.id] === "email" && <span className="text-[10px] text-[#22C55E]">✓ Enviada por e-mail ao proprietário</span>}
                     {enviados[it.id] === "salvo" && <span className="text-[10px] text-gray-500">✓ Salva no portal (unidade sem e-mail cadastrado)</span>}
@@ -1121,7 +1121,7 @@ function PosObraTab({ unit, isAdmin, sessionId, patch }: { unit: Unit; isAdmin: 
               </div>
             )}
 
-            {/* Encerramento: pelo cliente ("Serviço realizado", no portal) ou direto, quando a resposta marcou serviço inválido */}
+            {/* Encerramento: pelo cliente ("Serviço realizado", no portal) ou direto, quando a resposta marcou serviço improcedente */}
             {it.status === "concluido" && (
               it.concluidoPor ? (
                 <div className="flex items-center gap-3 bg-[#22C55E]/[0.07] border border-[#22C55E]/20 rounded-xl px-3 py-2">
@@ -1131,7 +1131,7 @@ function PosObraTab({ unit, isAdmin, sessionId, patch }: { unit: Unit; isAdmin: 
                 </div>
               ) : (
                 <div className="flex items-center gap-3 bg-white/[0.03] border border-white/10 rounded-xl px-3 py-2">
-                  <span className="text-gray-400 text-xs font-bold flex-shrink-0">🚫 Encerrado — serviço inválido</span>
+                  <span className="text-gray-400 text-xs font-bold flex-shrink-0">🚫 Encerrado — serviço improcedente</span>
                   {it.concluidoEm && <span className="text-[10px] text-gray-500">{new Date(it.concluidoEm).toLocaleString("pt-BR")}</span>}
                 </div>
               )
